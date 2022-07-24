@@ -182,7 +182,7 @@ class FatLaplaceVB(BaseVB):
     def __init__(self, data, lambd=1, r=0.5):
         self.lambd = lambd
         self.r = r
-        super().__init__()
+        super().__init__(data)
 
 
     def rth_moment(mu, sigma):
