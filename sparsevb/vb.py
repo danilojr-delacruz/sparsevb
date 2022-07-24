@@ -5,7 +5,7 @@ import scipy.special
 import time
 
 from abc import ABC, abstractmethod
-
+from sparsevb import *
 
 class BaseVB(ABC):
 
@@ -78,11 +78,17 @@ class BaseVB(ABC):
     def posterior_mean(mu, gamma):
         return mu*gamma
 
+    def __repr__(self):
+        return "BaseVB()"
+
+    def __str__(self):
+        return self.__repr()
+
 
 class LaplaceVB(BaseVB):
 
-    def __init__(self, data):
-        self.lambd = 1
+    def __init__(self, data, lambd=1):
+        self.lambd = lambd
         super().__init__(data)
 
 
@@ -103,7 +109,7 @@ class LaplaceVB(BaseVB):
         def func(sigma_i):
             terms = [
                 self.XX[i, i] * (sigma_i**2) / 2,
-                self.lambd * mu[i] * sigma_i * np.sqrt(2 / np.pi) * np.exp(-mu[i]**2 / (2 * sigma_i**2)),
+                self.lambd * sigma_i * np.sqrt(2 / np.pi) * np.exp(-mu[i]**2 / (2 * sigma_i**2)),
                 self.lambd * mu[i] * (1 - sp.stats.norm.cdf(mu[i] / sigma_i)),
                 -np.log(sigma_i)
             ]
@@ -119,4 +125,62 @@ class LaplaceVB(BaseVB):
             1/2
         ]
         return sum(terms)
+
+    def __repr__(self):
+        return f"Laplace(lambd={self.lambda})"
+
+
+class FatLaplaceVB(BaseVB):
+
+    def __init__(self, data, lambd=1, r=0.5):
+        self.lambd = lambd
+        self.r = r
+        super().__init__()
+
+
+    def rth_moment(mu, sigma):
+        r = self.r
+
+        term0 = (sigma**r) * (2**(r/2))
+        term1 = sp.special.gamma((r+1) / 2) / sp.special.gamma(1/2)
+        term2 = sp.special.hyp1f1(-r/2, 1/2, -1/2 * (mu / sigma)**2)
+        
+        return term0 * term1 * term2
+
+    def mu_function(self, i, mu, sigma, gamma):
+        mask = (np.arange(self.p) != i)
+        def func(mu_i):
+            terms = [
+                mu_i * (self.XX[i, :] * gamma * mu)[mask].sum(),
+                self.XX[i, i] * (mu_i**2) / 2,
+                - self.YX[i] * mu_i,
+                self.lambd * self.rth_moment(mu_i, sigma[i]) 
+            ]
+            return sum(terms)
+        return func
+
+    def sigma_function(self, i, mu, sigma, gamma):
+        def func(sigma_i):
+            terms = [
+                self.XX[i, i] * (sigma_i**2) / 2,
+                self.lambd * self.rth_moment(mu[i], sigma_i)
+                -np.log(sigma_i)
+            ]
+            return sum(terms)
+        return func
+
+    def gamma_function(self, i, mu, sigma, gamma):
+        r = self.r
+        prior_normalising_factor = r * self.lambd**(1/r) / (2 * sp.special.gamma(1/r))
+        terms = [
+            np.log(self.a0 / self.b0),
+            np.log(np.sqrt(2 * np.pi) * sigma[i] * prior_normalising_factor),
+            -self.mu_function(i, mu, sigma, gamma)(mu[i]),
+            -self.XX[i, i] * (sigma[i]**2) / 2,
+            1/2
+        ]
+        return sum(terms)
+
+    def __repr__(self):
+        return f"FatLaplace(lambd={self.lambd}, r={self.r})"
 
