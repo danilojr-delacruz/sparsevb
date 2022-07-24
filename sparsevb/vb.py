@@ -82,7 +82,7 @@ class BaseVB(ABC):
 class LaplaceVB(BaseVB):
 
     def __init__(self, data):
-        self.lambda = 1
+        self.lambd = 1
         super().__init__(data)
 
 
