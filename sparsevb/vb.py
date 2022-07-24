@@ -185,7 +185,7 @@ class FatLaplaceVB(BaseVB):
         super().__init__(data)
 
 
-    def rth_moment(mu, sigma):
+    def rth_moment(self, mu, sigma):
         r = self.r
 
         term0 = (sigma**r) * (2**(r/2))
