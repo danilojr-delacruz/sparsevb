@@ -56,10 +56,10 @@ class BaseVB(ABC):
         while delta_h >= tolerance:
             for i in a:
                 # Use old values throughout or newest as possible?
-                mu[i] = minimize(self.f(i, mu, sigma, gamma), mu[i])
-                sigma[i] = minimize(self.g(i, mu, sigma, gamma), sigma[i], bounds=[(1e-5, np.inf)])
+                mu[i] = minimize(self.mu_function(i, mu, sigma, gamma), mu[i])
+                sigma[i] = minimize(self.sigma_function(i, mu, sigma, gamma), sigma[i], bounds=[(1e-5, np.inf)])
                 gamma_old[i] = gamma[i]
-                gamma[i] = logit_inv(self.gamma(i, mu, sigma, gamma))
+                gamma[i] = logit_inv(self.gamma_function(i, mu, sigma, gamma))
                 
             delta_h = DeltaH(gamma_old, gamma)
             
