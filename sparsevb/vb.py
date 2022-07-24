@@ -78,3 +78,45 @@ class BaseVB(ABC):
     def posterior_mean(mu, gamma):
         return mu*gamma
 
+
+class LaplaceVB(BaseVB):
+
+    def __init__(self, data):
+        self.lambda = 1
+        super().__init__(data)
+
+
+    def mu_function(self, i, mu, sigma, gamma):
+        mask = (np.arange(self.p) != i)
+        def func(mu_i):
+            terms = [
+                mu_i * (self.XX[i, :] * gamma * mu)[mask].sum(),
+                self.XX[i, i] * (mu_i**2) / 2,
+                - self.YX[i] * mu_i,
+                self.lambd * sigma[i] * np.sqrt(2 / np.pi) * np.exp(-mu_i**2 / (2 * sigma[i]**2)),
+                self.lambd * mu_i * (1 - 2*sp.stats.norm.cdf(-mu_i / sigma[i]))
+            ]
+            return sum(terms)
+        return func
+
+    def sigma_function(self, i, mu, sigma, gamma):
+        def func(sigma_i):
+            terms = [
+                self.XX[i, i] * (sigma_i**2) / 2,
+                self.lambd * mu[i] * sigma_i * np.sqrt(2 / np.pi) * np.exp(-mu[i]**2 / (2 * sigma_i**2)),
+                self.lambd * mu[i] * (1 - sp.stats.norm.cdf(mu[i] / sigma_i)),
+                -np.log(sigma_i)
+            ]
+            return sum(terms)
+        return func
+
+    def gamma_function(self, i, mu, sigma, gamma):
+        terms = [
+            np.log(self.a0 / self.b0),
+            np.log(np.sqrt(np.pi) * sigma[i] * self.lambd / np.sqrt(2)),
+            -self.mu_function(i, mu, sigma, gamma)(mu[i]),
+            -self.XX[i, i] * (sigma[i]**2) / 2,
+            1/2
+        ]
+        return sum(terms)
+
