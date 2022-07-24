@@ -94,7 +94,7 @@ class GaussianVB(BaseVB):
         return 1 / np.sqrt(self.XX[i, i] + gamma[i])
 
     def gamma_function(self, i, mu, sigma, gamma):
-        return logit(1/self.p) + log(sigma[i]) + mu[i]**2 / (2 * sigma[i]**2)
+        return logit(1/self.p) + np.log(sigma[i]) + mu[i]**2 / (2 * sigma[i]**2)
 
     def estimate_vb_parameters(self, tolerance=1e-5, verbose=False):
 
