@@ -174,7 +174,7 @@ class LaplaceVB(BaseVB):
         return sum(terms)
 
     def __repr__(self):
-        return f"Laplace(lambd={self.lambda})"
+        return f"Laplace(lambd={self.lambd})"
 
 
 class FatLaplaceVB(BaseVB):
