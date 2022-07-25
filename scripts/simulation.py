@@ -23,11 +23,14 @@ os.mkdir(f"{directory}/figures")
 os.mkdir(f"{directory}/data")
 
 # Specification of prior
-prior = input("Specify Prior Distribution (Laplace/FatLaplace): ")
+prior = input("Specify Prior Distribution (Gaussian/Laplace/FatLaplace): ")
 
-if prior == "Laplace":
+if prior == "Gaussian":
+    vb_class = vb.GaussianVB
+elif prior == "Laplace":
     vb_class = vb.LaplaceVB
 elif prior == "FatLaplace":
+    r = float(input("Specify 0 < r < 1: "))
     vb_class = vb.FatLaplaceVB
 else:
     raise Exception("Prior Distribution not recognised")
@@ -77,10 +80,14 @@ fig_gamma.suptitle("Gamma Activation", size=25)
 
 parameters = {}
 for t in range(4):
-    VB = vb_class(data[t])
+    if prior == "FatLaplace":
+        VB = vb_class(data[t], r=r)
+    else:
+        VB = vb_class(data[t])
 
+    print(labels[t])
     start_time = time.time()
-    mu, sigma, gamma = VB.estimate_vb_parameters()
+    mu, sigma, gamma = VB.estimate_vb_parameters(verbose=True)
     end_time = time.time()
     run_time = end_time - start_time
 
