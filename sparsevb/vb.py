@@ -293,7 +293,6 @@ class JensenBoundCauchy(BaseVB):
         return func
 
     def gamma_function(self, i, mu, sigma, gamma):
-        prior_normalising_factor = r * self.lambd**(1/r) / (2 * sp.special.gamma(1/r))
         terms = [
             np.log(self.a0 / self.b0),
             -self.mu_function(i, mu, sigma, gamma)(mu[i]),
