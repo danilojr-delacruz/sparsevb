@@ -34,6 +34,8 @@ elif prior == "FatLaplace":
     vb_class = vb.FatLaplaceVB
 elif prior == "JensenBoundCauchy":
     vb_class = vb.JensenBoundCauchy
+elif prior == "NumericIntCauchy":
+    vb_class = vb.NumericIntCauchy
 else:
     raise Exception("Prior Distribution not recognised")
 
