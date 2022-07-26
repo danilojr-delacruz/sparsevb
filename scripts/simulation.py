@@ -32,6 +32,8 @@ elif prior == "Laplace":
 elif prior == "FatLaplace":
     r = float(input("Specify 0 < r < 1: "))
     vb_class = vb.FatLaplaceVB
+elif prior == "JensenBoundCauchy":
+    vb_class = vb.JensenBoundCauchy
 else:
     raise Exception("Prior Distribution not recognised")
 
