@@ -360,5 +360,5 @@ class NumericIntCauchy(BaseVB):
 
 
     def __repr__(self):
-        return "JensenBoundCauchy()"
+        return "NumericIntCauchy()"
 
