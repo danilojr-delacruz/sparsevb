@@ -105,7 +105,7 @@ class LaplaceCalibration:
             ax[row, col].set_ylabel("Value", size=15)
             ax[row, col].set_title(metric, size=20)
             
-        fig.suptitle(f"Metrics of FatLaplace as $r$ is varied compared against Laplace ({label})", size=20)
+        fig.suptitle(f"Metrics of FatLaplace as $r$ is varied compared against Laplace ({theta_loc})", size=20)
         ax[0, 0].legend(fontsize=15)
 
     def plot_FatLaplace_vs_Gaussian(self, theta_loc=labels[0]):
@@ -120,6 +120,6 @@ class LaplaceCalibration:
             ax[row, col].set_ylabel("Value", size=15)
             ax[row, col].set_title(metric, size=20)
             
-        fig.suptitle(f"Metrics of FatLaplace as $r$ is varied compared against Gaussian ({label})", size=20)
+        fig.suptitle(f"Metrics of FatLaplace as $r$ is varied compared against Gaussian ({theta_loc})", size=20)
         ax[0, 0].legend(fontsize=15)
 

@@ -54,6 +54,7 @@ class BaseVB(ABC):
         start_time = time.time()
         epochs = 0
         while delta_h >= tolerance:
+            print(epochs, round(delta_h, 7), round(time.time() - start_time, 0))
             for i in a:
                 # Use old values throughout or newest as possible?
                 mu[i] = minimize(self.mu_function(i, mu, sigma, gamma), mu[i])
