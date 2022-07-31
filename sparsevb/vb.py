@@ -86,7 +86,7 @@ class BaseVB(ABC):
             for i in a:
                 # Use old values throughout or newest as possible?
                 sigma[i] = self.update_sigma(i, mu, sigma, gamma)
-                mu[i] = self.updated_mu(i, mu, sigma, gamma)
+                mu[i] = self.update_mu(i, mu, sigma, gamma)
                 gamma_old[i] = gamma[i]
                 gamma[i] = self.update_gamma(i, mu, sigma, gamma)
                 
