@@ -42,6 +42,15 @@ class BaseVB(ABC):
     def gamma_function(self, i, mu, sigma, gamma):
         pass
 
+    def update_mu(self, i, mu, sigma, gamma):
+        return minimize(self.mu_function(i, mu, sigma, gamma), mu[i])
+
+    def update_sigma(self, i, mu, sigma, gamma):
+        return minimize(self.sigma_function(i, mu, sigma, gamma), sigma[i], bounds=[(1e-5, np.inf)])
+
+    def update_gamma(self, i, mu, sigma, gamma):
+        return logit_inv(self.gamma_function(i, mu , sigma, gamma))
+
     def estimate_vb_parameters(self, tolerance=1e-5, verbose=False):
 
         mu, sigma, gamma = self.initial_values()
@@ -57,10 +66,10 @@ class BaseVB(ABC):
             print(epochs, round(delta_h, 7), round(time.time() - start_time, 0))
             for i in a:
                 # Use old values throughout or newest as possible?
-                mu[i] = minimize(self.mu_function(i, mu, sigma, gamma), mu[i])
-                sigma[i] = minimize(self.sigma_function(i, mu, sigma, gamma), sigma[i], bounds=[(1e-5, np.inf)])
+                mu[i] = self.updated_mu(i, mu, sigma, gamma)
+                sigma[i] = self.update_sigma(i, mu, sigma, gamma)
                 gamma_old[i] = gamma[i]
-                gamma[i] = logit_inv(self.gamma_function(i, mu, sigma, gamma))
+                gamma[i] = self.update_gamma(i, mu, sigma, gamma)
                 
             delta_h = DeltaH(gamma_old, gamma)
             
