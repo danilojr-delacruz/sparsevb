@@ -165,39 +165,10 @@ class FatLaplaceVB(BaseVB):
         
         return term0 * term1 * term2
 
-    def mu_function(self, i, mu, sigma, gamma):
-        mask = (np.arange(self.p) != i)
-        def func(mu_i):
-            terms = [
-                mu_i * (self.XX[i, :] * gamma * mu)[mask].sum(),
-                self.XX[i, i] * (mu_i**2) / 2,
-                - self.YX[i] * mu_i,
-                self.lambd * self.rth_moment(mu_i, sigma[i]) 
-            ]
-            return sum(terms)
-        return func
-
-    def sigma_function(self, i, mu, sigma, gamma):
-        def func(sigma_i):
-            terms = [
-                self.XX[i, i] * (sigma_i**2) / 2,
-                self.lambd * self.rth_moment(mu[i], sigma_i)
-                -np.log(sigma_i)
-            ]
-            return sum(terms)
-        return func
-
-    def gamma_function(self, i, mu, sigma, gamma):
+    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
         r = self.r
-        prior_normalising_factor = r * self.lambd**(1/r) / (2 * sp.special.gamma(1/r))
-        terms = [
-            np.log(self.a0 / self.b0),
-            np.log(np.sqrt(2 * np.pi) * sigma[i] * prior_normalising_factor),
-            -self.mu_function(i, mu, sigma, gamma)(mu[i]),
-            -self.XX[i, i] * (sigma[i]**2) / 2,
-            1/2
-        ]
-        return sum(terms)
+        coeff = (r * self.lambd**(1/r)) / (2 * sp.special.gamma(1/r))
+        return np.log(coeff) - self.lambd*self.rth_moment(mu_i, sigma_i)
 
     def __repr__(self):
         return f"FatLaplace(lambd={self.lambd}, r={self.r})"
