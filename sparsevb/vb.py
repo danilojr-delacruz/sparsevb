@@ -198,38 +198,8 @@ class NumericIntCauchy(BaseVB):
 
         return left + middle + right + np.log(np.pi)
 
-    def mu_function(self, i, mu, sigma, gamma):
-        mask = (np.arange(self.p) != i)
-        def func(mu_i):
-            terms = [
-                mu_i * (self.XX[i, :] * gamma * mu)[mask].sum(),
-                self.XX[i, i] * (mu_i**2) / 2,
-                - self.YX[i] * mu_i,
-                self.neg_expected_log_g(mu_i, sigma[i])
-            ]
-            return sum(terms)
-        return func
-
-    def sigma_function(self, i, mu, sigma, gamma):
-        def func(sigma_i):
-            terms = [
-                self.XX[i, i] * (sigma_i**2) / 2,
-                -np.log(sigma_i),
-                self.neg_expected_log_g(mu[i], sigma_i)
-            ]
-            return sum(terms)
-        return func
-
-    def gamma_function(self, i, mu, sigma, gamma):
-        terms = [
-            np.log(self.a0 / self.b0),
-            -self.mu_function(i, mu, sigma, gamma)(mu[i]),
-            -self.XX[i, i] * (sigma[i]**2) / 2,
-            (1 + np.log(2*np.pi) )/ 2,
-            -np.log(sigma[i])
-        ]
-        return sum(terms)
-
+    def expected_log_prior(self, i, mu_i, sigma_i):
+        return -self.neg_expected_log_g(mu_i, sigma_i)
 
     def __repr__(self):
         return "NumericIntCauchy()"
