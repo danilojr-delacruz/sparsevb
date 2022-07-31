@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import scipy as sp
+import scipy.stats
 import os
 import matplotlib.pyplot as plt
 
@@ -26,6 +28,60 @@ class Analyse:
 
         self.path = f"{directory}/{name}"
         self.summary_df = pd.read_csv(f"{self.path}/summary.csv", index_col=0)
+
+    def get_data(self, name, label="Beginning"):
+        """label one of [Beginning, Middle, End, Uniform].
+        name one of [parameters, theta, X, Y]
+        """
+        path = f"{self.path}/data/{label}_{name}.csv"
+        if name == "parameters":
+            df = pd.read_csv(path, index_col=0)
+            arr = np.array(df)
+            mu, sigma, gamma = arr[:, 0], arr[:, 1], arr[:, 2]
+            return mu, sigma, gamma
+        else:
+            arr = np.loadtxt(path)
+            return arr
+
+    def plot_credible_regions(self, label="Beginning", mode="positive", alpha=0.05, ax=None, true_param_markersize=15):
+        """mode one of [positive, negative, both]
+        true_param_markersize controls markersize of true parameter.
+        """
+
+        mu, sigma, gamma = self.get_data("parameters", label=label)
+        theta = self.get_data("theta", label=label)
+        
+        normal_coverage = np.maximum(gamma - alpha, 0)
+        scale_factor = sp.stats.norm.ppf((normal_coverage + 1) / 2)
+        # Confidence Interval
+        lower, upper = mu + sigma*scale_factor, mu - sigma*scale_factor
+        # Posterior Mean
+        posterior_mean = mu*gamma
+
+        pos_index = np.where(theta != 0)[0]
+        neg_index = np.where(theta == 0)[0]
+
+        if mode == "positive":
+            index = pos_index
+        elif mode == "negative":
+            index = neg_index
+        else:
+            index = np.arange(p)
+            fig, ax = plt.subplots(ncols=2, figsize=(20, 5))
+            self.plot_credible_regions(label=label, mode="positive", alpha=alpha, ax=ax[0])
+            self.plot_credible_regions(label=label, mode="negative", alpha=alpha, ax=ax[1])
+            return
+
+        if ax is None:
+            fig, ax = plt.subplots(1, figsize=(20, 5))
+ 
+        x = np.arange(len(index))
+        ax.fill_between(x, lower[index], upper[index], label="Credible Interval")
+        ax.scatter(x, posterior_mean[index], label="Posterior Mean")
+        ax.plot(x, theta[index], "v", markersize=true_param_markersize, label="True Parameter", color="tab:green")
+        ax.set_xticks(x[::len(index)//20], index[::len(index)//20])
+        ax.set_title(mode, size=20)
+        ax.legend()
 
     def plot_posterior_mean(self):
         fig, ax = plt.subplots(2, 2, figsize=(20, 10))
