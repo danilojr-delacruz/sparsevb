@@ -107,43 +107,7 @@ class GaussianVB(BaseVB):
     def gamma_function(self, i, mu, sigma, gamma):
         return np.log(self.a0 / self.b0) + np.log(sigma[i]) + (mu[i]**2) / (2 * sigma[i]**2)
 
-
-# Algorithm 3 - Batch, does not seem to converge well
-#     def estimate_vb_parameters(self, tolerance=1e-5, verbose=False):
-# 
-#         mu, sigma, gamma = self.initial_values()
-#         gamma_old = gamma.copy()
-#         
-#         delta_h = 1
-#         # Does this need to be updated each time?
-#         a = np.argsort(mu)[::-1]
-#     
-#         start_time = time.time()
-#         epochs = 0
-#         while delta_h >= tolerance:
-#             print(epochs, round(delta_h, 5))
-#             G = np.diag(gamma)
-#             mu = np.linalg.inv(self.XX + G) @ (self.YX.T)
-#             for i in range(self.p):
-#                 gamma_old[i] = gamma[i]
-#                 sigma[i] = self.sigma_function(i, mu, sigma, gamma)
-#                 gamma[i] = logit_inv(self.gamma_function(i, mu, sigma, gamma))
-# 
-#             delta_h = DeltaH(gamma_old, gamma)
-#             
-#             epochs += 1
-# 
-#         end_time = time.time()
-#         run_time = end_time - start_time
-# 
-#         if verbose:
-#             print(f"Ran {epochs} epochs in {round(run_time, 4)} seconds.")
-#             print(f"Final change in binary maximal entropy is {round(delta_h, 5)}.")
-#             
-#         return mu, sigma, gamma
-
-# Algorithm 2
-    def estimate_vb_parameters(self, tolerance=1e-5, verbose=False):
+   def estimate_vb_parameters(self, tolerance=1e-5, verbose=False):
 
         mu, sigma, gamma = self.initial_values()
         gamma_old = gamma.copy()
