@@ -117,7 +117,7 @@ class BaseVB(ABC):
 class GaussianVB(BaseVB):
 
     def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma) :
-        return -1/2 - np.log(np.sqrt(2*np.pi))
+        return -(mu_i**2 + sigma_i**2)/2 - np.log(np.sqrt(2*np.pi))
 
     def update_mu(self, i, mu, sigma, gamma):
         mask = (np.arange(self.p) != i)
