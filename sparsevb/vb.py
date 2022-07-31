@@ -45,6 +45,7 @@ class BaseVB(ABC):
             value = self.likelihood(i, mu_i, sigma[i], mu, sigma, gamma) \
                     - self.expected_log_prior(i, mu_i, sigma[i], mu, sigma, gamma)
             return value
+        return func
 
     def sigma_function(self, i, mu, sigma, gamma):
         def func(sigma_i):
@@ -52,6 +53,7 @@ class BaseVB(ABC):
                     - np.log(sigma_i) \
                     - self.expected_log_prior(i, mu[i], sigma_i, mu, sigma, gamma)
             return value
+        return func
 
     def gamma_function(self, i, mu, sigma, gamma):
         value = - self.likelihood(i, mu[i], sigma[i], mu, sigma, gamma) \
