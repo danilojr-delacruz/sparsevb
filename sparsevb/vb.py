@@ -37,13 +37,13 @@ class BaseVB(ABC):
                 - self.YX[i] * mu_i
         return value
 
-    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
+    def expected_log_prior(self, i, mu_i, sigma_i):
         return 0
 
     def mu_function(self, i, mu, sigma, gamma):
         def func(mu_i):
             value = self.likelihood(i, mu_i, sigma[i], mu, sigma, gamma) \
-                    - self.expected_log_prior(i, mu_i, sigma[i], mu, sigma, gamma)
+                    - self.expected_log_prior(i, mu_i, sigma[i])
             return value
         return func
 
@@ -51,7 +51,7 @@ class BaseVB(ABC):
         def func(sigma_i):
             value = self.likelihood(i, mu[i], sigma_i, mu, sigma, gamma) \
                     - np.log(sigma_i) \
-                    - self.expected_log_prior(i, mu[i], sigma_i, mu, sigma, gamma)
+                    - self.expected_log_prior(i, mu[i], sigma_i)
             return value
         return func
 
@@ -60,7 +60,7 @@ class BaseVB(ABC):
                 + np.log(sigma[i] * np.sqrt(2*np.pi)) \
                 + 1/2 \
                 - np.log(self.b0 / self.a0) \
-                + self.expected_log_prior(i, mu[i], sigma[i], mu, sigma, gamma)
+                + self.expected_log_prior(i, mu[i], sigma[i])
         return value
 
     def update_mu(self, i, mu, sigma, gamma):
@@ -118,7 +118,7 @@ class BaseVB(ABC):
 
 class GaussianVB(BaseVB):
 
-    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma) :
+    def expected_log_prior(self, i, mu_i, sigma_i):
         return -(mu_i**2 + sigma_i**2)/2 - np.log(np.sqrt(2*np.pi))
 
     def update_mu(self, i, mu, sigma, gamma):
@@ -138,7 +138,7 @@ class LaplaceVB(BaseVB):
         self.lambd = lambd
         super().__init__(data)
 
-    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
+    def expected_log_prior(self, i, mu_i, sigma_i):
         expected_abs = sigma_i * np.sqrt(2 / np.pi) * np.exp(- mu_i**2 / (2*sigma_i**2)) \
                        + mu_i * (1 - 2*sp.stats.norm.cdf(-mu_i / sigma_i))
         value = -self.lambd*expected_abs + np.log(self.lambd / 2)
@@ -155,7 +155,7 @@ class FatLaplaceVB(BaseVB):
         self.r = r
         super().__init__(data)
 
-    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
+    def expected_log_prior(self, i, mu_i, sigma_i):
         r = self.r
         coeff = (r * self.lambd**(1/r)) / (2 * sp.special.gamma(1/r))
         rth_moment = (sigma_i**r) * (2**(r/2)) \
@@ -170,7 +170,7 @@ class FatLaplaceVB(BaseVB):
 class JensenBoundCauchy(BaseVB):
 
     # Apply JensenBound instead of true value.
-    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
+    def expected_log_prior(self, i, mu_i, sigma_i):
         value = - np.log(1 + mu_i**2 + sigma_i**2) \
                 - np.log(np.pi)
         return value
