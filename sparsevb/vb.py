@@ -155,20 +155,13 @@ class FatLaplaceVB(BaseVB):
         self.r = r
         super().__init__(data)
 
-
-    def rth_moment(self, mu, sigma):
-        r = self.r
-
-        term0 = (sigma**r) * (2**(r/2))
-        term1 = sp.special.gamma((r+1) / 2) / sp.special.gamma(1/2)
-        term2 = sp.special.hyp1f1(-r/2, 1/2, -1/2 * (mu / sigma)**2)
-        
-        return term0 * term1 * term2
-
     def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
         r = self.r
         coeff = (r * self.lambd**(1/r)) / (2 * sp.special.gamma(1/r))
-        return np.log(coeff) - self.lambd*self.rth_moment(mu_i, sigma_i)
+        rth_moment = (sigma_i**r) * (2**(r/2)) \
+                     * sp.special.gamma((r+1) / 2) / sp.special.gamma(1/2) \
+                     * sp.special.hyp1f1(-r/2, 1/2, -1/2 * (mu_i / sigma_i)**2)
+        return np.log(coeff) - self.lambd*rth_moment
 
     def __repr__(self):
         return f"FatLaplace(lambd={self.lambd}, r={self.r})"
