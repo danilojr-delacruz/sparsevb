@@ -37,7 +37,7 @@ class BaseVB(ABC):
                 - self.YX[i] * mu_i
         return value
 
-    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma) :
+    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
         return 0
 
     def mu_function(self, i, mu, sigma, gamma):
@@ -116,21 +116,15 @@ class BaseVB(ABC):
 
 class GaussianVB(BaseVB):
 
-    def mu_function(self, i, mu, sigma, gamma):
+    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma) :
+        return -1/2 - np.log(np.sqrt(2*np.pi))
+
+    def update_mu(self, i, mu, sigma, gamma):
         mask = (np.arange(self.p) != i)
         return sigma[i]**2 * (self.YX[i] - (self.XX[i, :] * gamma * mu)[mask].sum())
 
-    def sigma_function(self, i, mu, sigma, gamma):
-        return 1 / np.sqrt(self.XX[i, i] + 1)
-
-    def gamma_function(self, i, mu, sigma, gamma):
-        return np.log(self.a0 / self.b0) + np.log(sigma[i]) + (mu[i]**2) / (2 * sigma[i]**2)
-
-    def update_mu(self, i, mu, sigma, gamma):
-        return self.mu_function(i, mu, sigma, gamma)
-
     def update_sigma(self, i, mu, sigma, gamma):
-        return self.sigma_function(i, mu, sigma, gamma)
+        return 1 / np.sqrt(self.XX[i, i] + 1)
 
     def __repr__(self):
         return "Gaussian()"
