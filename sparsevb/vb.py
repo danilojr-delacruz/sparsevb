@@ -137,7 +137,7 @@ class LaplaceVB(BaseVB):
         super().__init__(data)
 
     def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma):
-        expected_abs = sigma_i * np.sqrt(2 / np.pi) * np.exp(- mu_i**2 / (2*sigma_i**2))
+        expected_abs = sigma_i * np.sqrt(2 / np.pi) * np.exp(- mu_i**2 / (2*sigma_i**2)) \
                        + mu_i * (1 - 2*sp.stats.norm.cdf(-mu_i / sigma_i))
         value = -self.lambd*expected_abs + np.log(self.lambd / 2)
         return value
