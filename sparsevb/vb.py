@@ -30,17 +30,36 @@ class BaseVB(ABC):
         
         return mu, sigma, gamma 
 
-    @abstractmethod
+    def likelihood(self, i, mu_i, sigma_i, mu, sigma, gamma):
+        mask = (np.arange(self.p) != i)
+        value = mu_i * (self.XX[i, :] * gamma * mu * mask).sum() \
+                + self.XX[i, i] * (sigma_i**2 + mu_i**2) / 2 \
+                - self.YX[i] * mu_i
+        return value
+
+    def expected_log_prior(self, i, mu_i, sigma_i, mu, sigma, gamma) :
+        return 0
+
     def mu_function(self, i, mu, sigma, gamma):
-        pass
+        def func(mu_i):
+            value = self.likelihood(i, mu_i, sigma[i], mu, sigma, gamma) \
+                    - self.expected_log_prior(i, mu_i, sigma[i], mu, sigma, gamma)
+            return value
 
-    @abstractmethod
     def sigma_function(self, i, mu, sigma, gamma):
-        pass
+        def func(sigma_i):
+            value = self.likelihood(i, mu[i], sigma_i, mu, sigma, gamma) \
+                    - np.log(sigma_i) \
+                    - self.expected_log_prior(i, mu[i], sigma_i, mu, sigma, gamma)
+            return value
 
-    @abstractmethod
     def gamma_function(self, i, mu, sigma, gamma):
-        pass
+        value = self.likelihood(mu[i], sigma[i], mu, sigma, gamma) \
+                - np.log(sigma[i] * np.sqrt(2*np.pi)) \
+                - 1/2 \
+                + np.log(self.b0 / self.a0) \
+                - self.expected_log_prior(mu[i], sigma[i], mu, sigma, gamma)
+        return value
 
     def update_mu(self, i, mu, sigma, gamma):
         return minimize(self.mu_function(i, mu, sigma, gamma), mu[i])
@@ -122,7 +141,6 @@ class LaplaceVB(BaseVB):
     def __init__(self, data, lambd=1):
         self.lambd = lambd
         super().__init__(data)
-
 
     def mu_function(self, i, mu, sigma, gamma):
         mask = (np.arange(self.p) != i)
