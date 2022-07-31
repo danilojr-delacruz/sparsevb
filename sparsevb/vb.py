@@ -54,11 +54,11 @@ class BaseVB(ABC):
             return value
 
     def gamma_function(self, i, mu, sigma, gamma):
-        value = self.likelihood(mu[i], sigma[i], mu, sigma, gamma) \
-                - np.log(sigma[i] * np.sqrt(2*np.pi)) \
-                - 1/2 \
-                + np.log(self.b0 / self.a0) \
-                - self.expected_log_prior(mu[i], sigma[i], mu, sigma, gamma)
+        value = - self.likelihood(i, mu[i], sigma[i], mu, sigma, gamma) \
+                + np.log(sigma[i] * np.sqrt(2*np.pi)) \
+                + 1/2 \
+                - np.log(self.b0 / self.a0) \
+                + self.expected_log_prior(i, mu[i], sigma[i], mu, sigma, gamma)
         return value
 
     def update_mu(self, i, mu, sigma, gamma):
@@ -121,7 +121,7 @@ class GaussianVB(BaseVB):
 
     def update_mu(self, i, mu, sigma, gamma):
         mask = (np.arange(self.p) != i)
-        return sigma[i]**2 * (self.YX[i] - (self.XX[i, :] * gamma * mu)[mask].sum())
+        return sigma[i]**2 * (self.YX[i] - (self.XX[i, :] * gamma * mu * mask).sum())
 
     def update_sigma(self, i, mu, sigma, gamma):
         return 1 / np.sqrt(self.XX[i, i] + 1)
