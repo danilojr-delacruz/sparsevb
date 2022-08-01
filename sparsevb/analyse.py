@@ -14,7 +14,7 @@ s=20
 
 class Analyse:
 
-    def __init__(self, name=None, distribution=None, r=None):
+    def __init__(self, name=None, distribution=None, r=None, design_matrix="iid_elements"):
 
         if name is None:
             if distribution == "FatLaplace":
@@ -26,7 +26,7 @@ class Analyse:
             self.name = name
             self.distribution = name
 
-        self.path = f"{directory}/{name}"
+        self.path = f"{directory}/{design_matrix}/{name}"
         self.summary_df = pd.read_csv(f"{self.path}/summary.csv", index_col=0)
 
     def get_data(self, name, label="Beginning"):
