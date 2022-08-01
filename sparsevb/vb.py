@@ -72,7 +72,10 @@ class BaseVB(ABC):
     def update_gamma(self, i, mu, sigma, gamma):
         return logit_inv(self.gamma_function(i, mu , sigma, gamma))
 
-    def estimate_vb_parameters(self, tolerance=1e-5, verbose=False):
+    def estimate_vb_parameters(self, tolerance=1e-5, verbose=False, min_epochs=10, max_epochs=1000,
+            max_patience=10, patience_factor=2):
+        """Patience factor means to increase patience next delta_h needs to be within
+        patience_factor*tolerance of the previous one"""
 
         mu, sigma, gamma = self.initial_values()
         gamma_old = gamma.copy()
@@ -82,15 +85,28 @@ class BaseVB(ABC):
         
         start_time = time.time()
         epochs = 0
-        while delta_h >= tolerance:
+        patience = 0 # If reaches max patience we stop
+
+        while (delta_h > tolerance) | (epochs < min_epochs) | (patience < max_patience):
+
+            if epochs > max_epochs:
+                if verbose:
+                    print("Convergence failed")
+                break
+
             for i in a:
                 mu[i] = self.update_mu(i, mu, sigma, gamma)
                 sigma[i] = self.update_sigma(i, mu, sigma, gamma)
                 gamma_old[i] = gamma[i]
                 gamma[i] = self.update_gamma(i, mu, sigma, gamma)
                 
-            delta_h = DeltaH(gamma_old, gamma)
-            
+            new_delta_h = DeltaH(gamma_old, gamma)
+            if abs(delta_h - new_delta_h) <= patience_factor*tolerance:
+                patience += 1
+            else:
+                patience = 0
+
+            delta_h = new_delta_h
             epochs += 1
 
         end_time = time.time()
@@ -106,7 +122,8 @@ class BaseVB(ABC):
     def posterior_mean(mu, gamma):
         return mu*gamma
 
-    def get_history(self, tolerance=1e-5):
+    def get_history(self, tolerance=1e-5, verbose=False, min_epochs=10, max_epochs=1000,
+            max_patience=10, patience_factor=2):
         """Each row represent history of parameter"""
 
         mu, sigma, gamma = self.initial_values()
@@ -114,11 +131,19 @@ class BaseVB(ABC):
         
         delta_h = 1
         a = np.argsort(mu)[::-1]
-        
+
         history = {"mu": [mu.copy()], "sigma": [sigma.copy()],
                 "gamma": [gamma.copy()], "delta_h": [delta_h]}
+ 
+        start_time = time.time()
+        epochs = 0
+        patience = 0 # If reaches max patience we stop
 
-        while delta_h >= tolerance:
+        while (delta_h > tolerance) | (epochs < min_epochs) | (patience < max_patience):
+            if epochs > max_epochs:
+                if verbose:
+                    print("Convergence failed")
+                break
 
             for i in a:
                 mu[i] = self.update_mu(i, mu, sigma, gamma)
@@ -126,13 +151,27 @@ class BaseVB(ABC):
                 gamma_old[i] = gamma[i]
                 gamma[i] = self.update_gamma(i, mu, sigma, gamma)
                 
-            delta_h = DeltaH(gamma_old, gamma)
+            new_delta_h = DeltaH(gamma_old, gamma)
+            if abs(delta_h - new_delta_h) <= patience_factor*tolerance:
+                patience += 1
+            else:
+                patience = 0
+
+            delta_h = new_delta_h
+            epochs += 1
 
             history["mu"].append(mu.copy())
             history["sigma"].append(sigma.copy())
             history["gamma"].append(gamma.copy())
             history["delta_h"].append(delta_h)
 
+        end_time = time.time()
+        run_time = end_time - start_time
+
+        if verbose:
+            print(f"Ran {epochs} epochs in {round(run_time, 4)} seconds.")
+            print(f"Final change in binary maximal entropy is {round(delta_h, 5)}.")
+        
         history["mu"] = np.vstack(history["mu"]).T
         history["sigma"] = np.vstack(history["sigma"]).T
         history["gamma"] = np.vstack(history["gamma"]).T
