@@ -84,11 +84,10 @@ class BaseVB(ABC):
         start_time = time.time()
         epochs = 0
         while delta_h >= tolerance:
-            print(epochs, round(delta_h, 7), round(time.time() - start_time, 0))
             for i in a:
                 # Use old values throughout or newest as possible?
-                sigma[i] = self.update_sigma(i, mu, sigma, gamma)
                 mu[i] = self.update_mu(i, mu, sigma, gamma)
+                sigma[i] = self.update_sigma(i, mu, sigma, gamma)
                 gamma_old[i] = gamma[i]
                 gamma[i] = self.update_gamma(i, mu, sigma, gamma)
                 
@@ -123,7 +122,9 @@ class GaussianVB(BaseVB):
 
     def update_mu(self, i, mu, sigma, gamma):
         mask = (np.arange(self.p) != i)
-        return sigma[i]**2 * (self.YX[i] - (self.XX[i, :] * gamma * mu * mask).sum())
+        sigma_i = self.update_sigma(i, mu, sigma, gamma)
+        return sigma_i**2 * (self.YX[i] - (self.XX[i, :] * gamma * mu * mask).sum())
+        
 
     def update_sigma(self, i, mu, sigma, gamma):
         return 1 / np.sqrt(self.XX[i, i] + 1)
