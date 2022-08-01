@@ -42,6 +42,53 @@ class Analyse:
         else:
             arr = np.loadtxt(path)
             return arr
+    
+    def credible_region(self, mu, sigma, gamma, alpha=0.05):
+        normal_coverage = np.maximum(gamma - alpha, 0)
+        scale_factor = sp.stats.norm.ppf((normal_coverage + 1) / 2)
+        lower, upper = mu - sigma*scale_factor, mu + sigma*scale_factor
+        return lower, upper
+    
+    def credible_region_summary(self, label, mode, alpha):
+        mu, sigma, gamma = self.get_data("parameters", label=label)
+        theta = self.get_data("theta", label=label)
+        
+        lower, upper = self.credible_region(mu, sigma, gamma, alpha)
+        posterior_mean = mu*gamma
+
+        pos_index = np.where(theta != 0)[0]
+        neg_index = np.where(theta == 0)[0]
+        all_index = np.arange(p)
+
+        success = ((lower <= theta) & (theta <= upper)) | ((theta == 0) & (gamma != 1))
+        cr_length = upper - lower
+        components = (cr_length >= 1e-5) + (gamma != 1)*((0 < lower) | (upper < 0))
+        components = np.maximum(components, 1)
+
+        if mode == "positive":
+            index = pos_index
+        elif mode == "negative":
+            index = neg_index
+        else:
+            index = all_index
+
+        return success[index].mean(), cr_length[index].mean(), components[index].mean()
+
+    def credible_region_summary_df(self, label="Beginning", alphas=[0.1, 0.05, 0.01]):
+        modes = ["positive", "negative", "overall"]
+        result = {mode: {} for mode in modes}
+        for alpha in alphas:
+            for mode in modes:
+                accuracy, length, components = self.credible_region_summary(label, mode, alpha)
+                result[mode][alpha] = {}
+                result[mode][alpha]["accuracy"] = accuracy
+                result[mode][alpha]["average cr_length"] = length
+                result[mode][alpha]["average components"] = components
+
+        df = pd.concat([pd.DataFrame(result[mode]) for mode in modes], keys=modes)
+        df = df.swaplevel().sort_index()
+
+        return df
 
     def plot_credible_regions(self, label="Beginning", mode="positive", alpha=0.05, ax=None, true_param_markersize=15):
         """mode one of [positive, negative, both]
@@ -51,11 +98,7 @@ class Analyse:
         mu, sigma, gamma = self.get_data("parameters", label=label)
         theta = self.get_data("theta", label=label)
         
-        normal_coverage = np.maximum(gamma - alpha, 0)
-        scale_factor = sp.stats.norm.ppf((normal_coverage + 1) / 2)
-        # Confidence Interval
-        lower, upper = mu + sigma*scale_factor, mu - sigma*scale_factor
-        # Posterior Mean
+        lower, upper = self.credible_region(mu, sigma, gamma, alpha)
         posterior_mean = mu*gamma
 
         pos_index = np.where(theta != 0)[0]
