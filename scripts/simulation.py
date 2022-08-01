@@ -4,6 +4,8 @@ import pandas as pd
 import scipy as sp
 import scipy.stats
 import matplotlib.pyplot as plt
+import sklearn
+import sklearn.datasets
 import time
 import os
 import shutil
@@ -13,17 +15,9 @@ from pandas.plotting import table
 
 # Specification of simulation
 name = input("Specify Simulation Name: ")
-directory = f"/home/delacruz-danilojr/delacruz/Projects/urop/sparsevb/simulations/{name}"
-
-if os.path.exists(directory):
-    shutil.rmtree(directory)
-
-os.mkdir(directory)
-os.mkdir(f"{directory}/figures")
-os.mkdir(f"{directory}/data")
 
 # Specification of prior
-prior = input("Specify Prior Distribution (Gaussian/Laplace/FatLaplace): ")
+prior = input("Specify Prior Distribution (Gaussian/Laplace/FatLaplace/JensenBoundCauchy): ")
 
 if prior == "Gaussian":
     vb_class = vb.GaussianVB
@@ -39,6 +33,25 @@ elif prior == "NumericIntCauchy":
 else:
     raise Exception("Prior Distribution not recognised")
 
+# Specification of dataset
+design_matrix = input("Specify the Design Matrix: ")
+
+if design_matrix == "iid_elements":
+    pass
+elif design_matrix == "iid_rows":
+    pass
+else:
+    raise Exception("Design Matrix not recognised.")
+
+directory = f"/home/delacruz-danilojr/delacruz/Projects/urop/sparsevb/simulations/{design_matrix}/{name}"
+
+if os.path.exists(directory):
+    shutil.rmtree(directory)
+
+os.mkdir(directory)
+os.mkdir(f"{directory}/figures")
+os.mkdir(f"{directory}/data")
+
 
 # Generation of data
 seed = 0
@@ -51,7 +64,12 @@ np.random.seed(seed)
 
 labels = ["Beginning", "Middle", "End", "Uniform"]
 
-X = np.random.normal(size=(n, p))
+if design_matrix == "iid_elements": 
+    X = np.random.normal(size=(n, p))
+elif design_matrix == "iid_rows":
+    cov = sklearn.datasets.make_spd_matrix(p, random_state=0)
+    X = np.random.multivariate_normal(mean=np.zeros(p), cov=cov, size=n)
+
 random_non_zero_locations = np.random.choice(range(p), size=s, replace=False)
 
 ## Generate the different types of true thetas
