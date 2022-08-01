@@ -44,7 +44,7 @@ class Analyse:
             return arr
     
     def credible_region(self, mu, sigma, gamma, alpha=0.05):
-        normal_coverage = np.maximum(gamma - alpha, 0)
+        normal_coverage = np.divide(gamma - alpha, gamma, out=np.zeros_like(gamma), where=(gamma > alpha)) 
         scale_factor = sp.stats.norm.ppf((normal_coverage + 1) / 2)
         lower, upper = mu - sigma*scale_factor, mu + sigma*scale_factor
         return lower, upper
