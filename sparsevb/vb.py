@@ -78,14 +78,12 @@ class BaseVB(ABC):
         gamma_old = gamma.copy()
         
         delta_h = 1
-        # Does this need to be updated each time?
         a = np.argsort(mu)[::-1]
         
         start_time = time.time()
         epochs = 0
         while delta_h >= tolerance:
             for i in a:
-                # Use old values throughout or newest as possible?
                 mu[i] = self.update_mu(i, mu, sigma, gamma)
                 sigma[i] = self.update_sigma(i, mu, sigma, gamma)
                 gamma_old[i] = gamma[i]
@@ -107,6 +105,40 @@ class BaseVB(ABC):
     @staticmethod
     def posterior_mean(mu, gamma):
         return mu*gamma
+
+    def get_history(self, tolerance=1e-5):
+        """Each row represent history of parameter"""
+
+        mu, sigma, gamma = self.initial_values()
+        gamma_old = gamma.copy()
+        
+        delta_h = 1
+        a = np.argsort(mu)[::-1]
+        
+        history = {"mu": [mu.copy()], "sigma": [sigma.copy()],
+                "gamma": [gamma.copy()], "delta_h": [delta_h]}
+
+        while delta_h >= tolerance:
+
+            for i in a:
+                mu[i] = self.update_mu(i, mu, sigma, gamma)
+                sigma[i] = self.update_sigma(i, mu, sigma, gamma)
+                gamma_old[i] = gamma[i]
+                gamma[i] = self.update_gamma(i, mu, sigma, gamma)
+                
+            delta_h = DeltaH(gamma_old, gamma)
+
+            history["mu"].append(mu.copy())
+            history["sigma"].append(sigma.copy())
+            history["gamma"].append(gamma.copy())
+            history["delta_h"].append(delta_h)
+
+        history["mu"] = np.vstack(history["mu"]).T
+        history["sigma"] = np.vstack(history["sigma"]).T
+        history["gamma"] = np.vstack(history["gamma"]).T
+        history["delta_h"] = np.array(history["delta_h"])
+
+        return history
 
     def __repr__(self):
         return "BaseVB()"
