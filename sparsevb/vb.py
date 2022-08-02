@@ -89,7 +89,7 @@ class BaseVB(ABC):
 
         while (delta_h > tolerance) | (epochs < min_epochs) | (patience < max_patience):
 
-            if epochs > max_epochs:
+            if epochs >= max_epochs:
                 if verbose:
                     print("Convergence failed")
                 break
@@ -140,7 +140,7 @@ class BaseVB(ABC):
         patience = 0 # If reaches max patience we stop
 
         while (delta_h > tolerance) | (epochs < min_epochs) | (patience < max_patience):
-            if epochs > max_epochs:
+            if epochs >= max_epochs:
                 if verbose:
                     print("Convergence failed")
                 break
