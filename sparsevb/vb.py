@@ -64,11 +64,11 @@ class BaseVB(ABC):
                 + self.expected_log_prior(mu[i], sigma[i])
         return value
 
-    def update_mu(self, i, mu, sigma, gamma):
-        return minimize(self.mu_function(i, mu, sigma, gamma), mu[i])
+    def update_mu(self, i, mu, sigma, gamma, *args, **kwargs):
+        return minimize(self.mu_function(i, mu, sigma, gamma), mu[i], *args, **kwargs)
 
-    def update_sigma(self, i, mu, sigma, gamma):
-        return minimize(self.sigma_function(i, mu, sigma, gamma), sigma[i], bounds=[(1e-5, np.inf)])
+    def update_sigma(self, i, mu, sigma, gamma, *args, **kwargs):
+        return minimize(self.sigma_function(i, mu, sigma, gamma), sigma[i], bounds=[(1e-5, np.inf)], *args, **kwargs)
 
     def update_gamma(self, i, mu, sigma, gamma):
         return logit_inv(self.gamma_function(i, mu , sigma, gamma))
