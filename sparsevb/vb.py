@@ -199,6 +199,8 @@ class BaseVB(ABC):
         history["gamma"] = np.vstack(history["gamma"]).T
         history["delta_h"] = np.array(history["delta_h"])
         history["epochs"] = epochs
+        # Note this will longer than real runtime as we are storing things
+        # and hencing performing more operations
         history["run_time"] = run_time
 
         return history
