@@ -11,6 +11,7 @@ import os
 import shutil
 
 from sparsevb import *
+from sparsevb.analyse import Analyse
 from pandas.plotting import table
 
 # Specification of simulation
@@ -18,6 +19,7 @@ name = input("Specify Simulation Name: ")
 
 # Specification of prior
 prior = input("Specify Prior Distribution (Gaussian/Laplace/FatLaplace/JensenBoundCauchy): ")
+r = None
 
 if prior == "Gaussian":
     vb_class = vb.GaussianVB
@@ -88,19 +90,9 @@ data = [
     generate_data(X, theta[2, :]), generate_data(X, theta[3, :])
 ]
 
-summary = {}
-
-## Posterior Mean
-fig_pm, ax_pm = plt.subplots(2, 2, figsize=(20, 10))
-fig_pm.tight_layout(pad=5)
-fig_pm.suptitle("Posterior Mean", size=25)
-
-## Gamma Activation
-fig_gamma, ax_gamma = plt.subplots(2, 2, figsize=(20, 10))
-fig_gamma.tight_layout(pad=5)
-fig_gamma.suptitle("Gamma Activation", size=25)
-
+# Perform VB
 parameters = {}
+run_diagnostics = {}
 for t in range(4):
     if prior == "FatLaplace":
         VB = vb_class(data[t], r=r)
@@ -108,51 +100,12 @@ for t in range(4):
         VB = vb_class(data[t])
 
     print(labels[t])
-    start_time = time.time()
-    mu, sigma, gamma = VB.estimate_vb_parameters(verbose=True)
-    end_time = time.time()
-    run_time = end_time - start_time
+    mu, sigma, gamma, epochs, run_time, delta_h = VB.estimate_vb_parameters(verbose=True, include_run_details=True)
 
-    posterior_mean = VB.posterior_mean(mu, gamma)
-
-    row, col = t//2, t%2
-    ax_pm[row, col].scatter(np.arange(p), posterior_mean, label="VB")
-    ax_pm[row, col].scatter(np.arange(p), theta[t], label="Signal")
-    ax_pm[row, col].set_title(labels[t], size=20)
-    ax_pm[row, col].set_xlabel("Index", size=15)
-    ax_pm[row, col].set_ylabel("Signal Value", size=15)
-
-    ax_gamma[row, col].scatter(np.arange(p), gamma, label="VB")
-    ax_gamma[row, col].scatter(np.arange(p), theta[t] != 0, label="Signal")
-    ax_gamma[row, col].set_title(labels[t], size=20)
-    ax_gamma[row, col].set_xlabel("Index", size=15)
-    ax_gamma[row, col].set_ylabel("Activation", size=15)
-
-    l2_error = l2(posterior_mean, theta[t])
-    fdr, tpr = fdr_tpr(gamma > 0.5, theta[t] != 0)
-
-    summary[labels[t]] = [l2_error, fdr, tpr, run_time]
     parameters[t] = pd.DataFrame({"mu": mu, "sigma": sigma, "gamma": gamma})
+    run_diagnostics[t] = {"epochs": epochs, "run_time (sec)": run_time, "delta_h": delta_h}
 
-## Create Summary
-summary_df = pd.DataFrame(summary, index=["$l_2$-error", "FDR", "TPR", "runtime (sec)"])
-fig_df, ax_df = plt.subplots()
-ax_df.axis("off")
-table(ax_df, summary_df.round(4))
-
-
-### Only want legend to show for first one
-ax_pm[0, 0].legend(fontsize=15)
-ax_gamma[0, 0].legend(fontsize=15)
-
-# Save pictures
-fig_pm.savefig(f"{directory}/figures/posterior_mean.png")
-fig_gamma.savefig(f"{directory}/figures/gamma_activation.png")
-fig_df.savefig(f"{directory}/figures/summary.png", bbox_inches="tight")
-
-# Save data
-summary_df.to_csv(f"{directory}/summary.csv")
-
+# Save Data
 for t in range(4):
     prefix = f"{directory}/data/{labels[t]}"
     X, Y = data[t]
@@ -162,6 +115,59 @@ for t in range(4):
     
     parameters[t].to_csv(f"{prefix}_parameters.csv")
 
+# Perform Analysis
+analyser = Analyse(name=name, distribution=prior, r=r, design_matrix=design_matrix)
+
+## Create Summary
+summary = {}
+for t in range(4):
+    label = labels[t]
+    mu, sigma, gamma = analyser.get_data("parameters", label=label)
+    pos_index, neg_index, all_index = analyser.get_data("index", label=label)
+    theta = analyser.get_data("theta")
+    
+    posterior_mean = mu*gamma
+    fdr, tpr = fdr_tpr(gamma > 0.5, theta != 0)
+    lower, upper = analyser.credible_region(mu, sigma, gamma, alpha=0.05)
+
+    summary[label] = {
+        ("FDR", "all"): fdr,
+        ("TPR", "all"): tpr,
+        ("Epochs", "all"): run_diagnostics[t]["epochs"],
+        ("Runtime (sec)", "all"): run_diagnostics[t]["run_time (sec)"],
+        ("Delta H", "all"): run_diagnostics[t]["delta_h"],
+    }
+    
+    for descriptor, func, args in [
+        ("L2-Error", analyser.l2_error, (posterior_mean, theta)),
+        ("Gamma Binarity", analyser.gamma_binarity, (gamma,)),
+        ("CR Inclusion Accuracy", analyser.credible_region_accuracy, (theta, lower, upper)),
+        ("CR Average Length", analyser.credible_region_average_length, (lower, upper))
+    ]:
+        summary[label]
+        for target, index in [
+            ("positive", pos_index), ("negative", neg_index), ("all", all_index)
+        ]:
+            processed_args = [arg[index] for arg in args]
+            summary[label][(descriptor, target)] = func(*processed_args)
+summary_df = pd.DataFrame(summary)
+summary_df.index.names = ("Metric", "Target")
+
+fig_df, ax_df = plt.subplots()
+ax_df.axis("off")
+table(ax_df, summary_df.round(6))
+
+### Only want legend to show for first one
+fig_pm, _ = analyser.plot_posterior_mean()
+fig_gamma, _ = analyser.plot_gamma_activation()
+
+## Save pictures
+fig_pm.savefig(f"{directory}/figures/posterior_mean.png")
+fig_gamma.savefig(f"{directory}/figures/gamma_activation.png")
+fig_df.savefig(f"{directory}/figures/summary.png", bbox_inches="tight")
+
+## Save data
+summary_df.to_csv(f"{directory}/summary.csv")
 
 
 
