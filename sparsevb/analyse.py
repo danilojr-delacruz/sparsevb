@@ -87,6 +87,9 @@ class Analyse:
             neg_index = np.where(theta == 0)[0]
             all_index = np.arange(p)
             return pos_index, neg_index, all_index
+        if name == "data":
+            X, Y = (self.get_data("X", label), self.get_data("Y", label))
+            return (X, Y)
         else:
             arr = np.loadtxt(path)
             return arr
