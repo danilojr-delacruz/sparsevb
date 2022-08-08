@@ -73,8 +73,8 @@ class BaseVB(ABC):
     def update_gamma(self, i, mu, sigma, gamma):
         return logit_inv(self.gamma_function(i, mu , sigma, gamma))
 
-    def estimate_vb_parameters(self, tolerance=1e-5, verbose=False, min_epochs=10, max_epochs=1000,
-            max_patience=10, patience_factor=2):
+    def estimate_vb_parameters(self, tolerance=1e-5, min_epochs=10, max_epochs=1000,
+            max_patience=10, patience_factor=2, verbose=False, include_run_details=False):
         """Patience factor means to increase patience next delta_h needs to be within
         patience_factor*tolerance of the previous one"""
 
@@ -116,7 +116,9 @@ class BaseVB(ABC):
         if verbose:
             print(f"Ran {epochs} epochs in {round(run_time, 4)} seconds.")
             print(f"Final change in binary maximal entropy is {round(delta_h, 5)}.")
-            
+        if include_run_details:
+            return mu, sigma, gamma, epochs, run_time, delta_h
+
         return mu, sigma, gamma
 
     @staticmethod
