@@ -5,6 +5,8 @@ import scipy.stats
 import os
 import matplotlib.pyplot as plt
 
+from sparsevb import l2
+
 directory = "/home/delacruz-danilojr/delacruz/Projects/urop/sparsevb/simulations"
 
 labels = ["Beginning", "Middle", "End", "Uniform"]
@@ -128,6 +130,22 @@ class Analyse:
 
         return df
 
+    @staticmethod
+    def l2_error(x, y):
+        return l2(x, y)
+
+    @staticmethod
+    def gamma_binarity(gamma):
+        return np.minimum(1-gamma, gamma).mean()
+
+    @staticmethod
+    def credible_region_accuracy(theta, lower, upper):
+        return ((lower <= theta) & (theta <= upper)).mean()
+
+    @staticmethod
+    def credible_region_average_length(lower, upper):
+        return (upper - lower).mean()
+
     def plot_credible_regions(self, label="Beginning", mode="positive", alpha=0.05, ax=None, true_param_markersize=15):
         """mode one of [positive, negative, both]
         true_param_markersize controls markersize of true parameter.
@@ -186,6 +204,8 @@ class Analyse:
             ax[row, col].set_ylabel("Signal Value", size=15)
 
         ax[0, 0].legend(fontsize=15)
+
+        return fig, ax
         
     def plot_gamma_activation(self):
         fig, ax = plt.subplots(2, 2, figsize=(20, 10))
@@ -208,6 +228,8 @@ class Analyse:
             ax[row, col].set_ylabel("Activation", size=15)
 
         ax[0, 0].legend(fontsize=15)
+
+        return fig, ax
 
 
 class LaplaceCalibration:
