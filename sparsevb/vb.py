@@ -139,7 +139,7 @@ class BaseVB(ABC):
         term_2 = -np.log(1 - w_bar)
         term_3 = np.log(gamma ** gamma) + np.log((1-gamma) ** (1-gamma))
         
-        variational_and_prior = gamma*term_1 + (1-gamma)*term_2 + term3
+        variational_and_prior = gamma*term_1 + (1-gamma)*term_2 + term_3
         variational_and_prior = variational_and_prior.sum()
         
         return likelihood + variational_and_prior
