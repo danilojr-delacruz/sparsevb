@@ -74,7 +74,7 @@ class Analyse:
 
     def get_data(self, name, label="Beginning"):
         """label one of [Beginning, Middle, End, Uniform].
-        name one of [parameters, theta, X, Y]
+        name one of [index, parameters, theta, X, Y]
         """
         path = f"{self.path}/data/{label}_{name}.csv"
         if name == "parameters":
@@ -82,6 +82,12 @@ class Analyse:
             arr = np.array(df)
             mu, sigma, gamma = arr[:, 0], arr[:, 1], arr[:, 2]
             return mu, sigma, gamma
+        if name == "index":
+            theta = self.get_data("theta", label=label)
+            pos_index = np.where(theta != 0)[0]
+            neg_index = np.where(theta == 0)[0]
+            all_index = np.arange(p)
+            return pos_index, neg_index, all_index
         else:
             arr = np.loadtxt(path)
             return arr
