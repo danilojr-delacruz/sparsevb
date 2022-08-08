@@ -70,7 +70,6 @@ class Analyse:
             self.distribution = name
 
         self.path = f"{directory}/{design_matrix}/{name}"
-        self.summary_df = pd.read_csv(f"{self.path}/summary.csv", index_col=0)
 
     def get_data(self, name, label="Beginning"):
         """label one of [Beginning, Middle, End, Uniform].
