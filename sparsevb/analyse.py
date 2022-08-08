@@ -12,6 +12,47 @@ p=200
 n=100
 s=20
 
+
+def credible_region(mu, sigma, gamma, alpha=0.05):
+
+    cdf = sp.stats.norm.cdf
+    ppf = sp.stats.norm.ppf
+
+    if gamma <= alpha:
+        lower, upper = 0, 0
+    else:
+        f = mu + sigma*ppf(cdf(-mu/sigma) + np.sign(mu)*(1 - alpha/gamma))
+
+        if max(cdf(-mu/sigma), cdf(mu/sigma)) <= 1 - alpha/(2*gamma):
+            multiplier = ppf(1 - alpha/(2*gamma))
+            lower = mu - sigma*multiplier
+            upper = mu + sigma*multiplier
+        elif gamma < 1 - alpha:
+            lower, upper = sorted([0, f])
+        else:
+            multiplier = ppf(1/2 + (1-alpha)/(2*gamma))
+            cand_lower = mu - sigma*multiplier
+            cand_upper = mu + sigma*multiplier
+            
+            if (cand_lower <= 0) and (0 <= cand_upper):
+                lower, upper = sorted([0, f])
+            else:
+                option_1_length = abs(f)
+                option_2_length = 2*sigma*multiplier
+
+                if option_1_length <= option_2_length:
+                    lower, upper = sorted([0, f])
+                else:
+                    lower = cand_lower
+                    upper = cand_upper
+
+    return lower, upper
+
+credible_region = np.vectorize(credible_region, otypes=[float, float])
+
+
+
+
 class Analyse:
 
     def __init__(self, name=None, distribution=None, r=None, design_matrix="iid_elements"):
@@ -42,17 +83,15 @@ class Analyse:
         else:
             arr = np.loadtxt(path)
             return arr
-    
-    def credible_region(self, mu, sigma, gamma, alpha=0.05):
-        normal_coverage = np.divide(gamma - alpha, gamma, out=np.zeros_like(gamma), where=(gamma > alpha)) 
-        scale_factor = sp.stats.norm.ppf((normal_coverage + 1) / 2)
-        lower, upper = mu - sigma*scale_factor, mu + sigma*scale_factor
-        return lower, upper
-    
+
+    @staticmethod
+    def credible_region(mu, sigma, gamma, alpha=0.05):
+        return credible_region(mu, sigma, gamma, alpha)
+
     def credible_region_summary(self, label, mode, alpha):
         mu, sigma, gamma = self.get_data("parameters", label=label)
         theta = self.get_data("theta", label=label)
-        
+
         lower, upper = self.credible_region(mu, sigma, gamma, alpha)
         posterior_mean = mu*gamma
 
