@@ -101,7 +101,7 @@ class Analyse:
         neg_index = np.where(theta == 0)[0]
         all_index = np.arange(p)
 
-        success = ((lower <= theta) & (theta <= upper)) | ((theta == 0) & (gamma != 1))
+        success = (lower <= theta) & (theta <= upper)
         cr_length = upper - lower
         gamma_binarity = np.minimum(1-gamma, gamma)
 
