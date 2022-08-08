@@ -14,6 +14,7 @@ class BaseVB(ABC):
         X, Y = self.data
         self.XX = X.T @ X
         self.YX = Y.T @ X
+        self.YY = Y.T @ Y
         self.n, self.p = X.shape
 
         self.a0, self.b0 = 1, self.p
@@ -121,6 +122,27 @@ class BaseVB(ABC):
     @staticmethod
     def posterior_mean(mu, gamma):
         return mu*gamma
+
+    def nelbo(self, mu, sigma, gamma):
+        XXggmm = self.XX * np.outer(gamma*mu, gamma*mu)
+        likelihood = self.YY \
+                    -2 * self.YX @ (gamma*mu) \
+                    + XXggmm.sum() - XXggmm.trace() \
+                    + np.diag(self.XX) @ (gamma * (mu**2 + sigma**2))
+        likelihood /= 2
+        
+        w_bar = self.a0 / (self.a0 + self.b0)
+        term_1 = np.log(gamma / w_bar) - np.log(sigma * np.sqrt(2*np.pi)) \
+                - 1/2 - self.expected_log_prior(mu, sigma)
+        term_2 = np.log(1 - gamma) - np.log(1 - w_bar)
+        
+        variational_and_prior = gamma*term_1 + (1-gamma)*term_2
+        variational_and_prior = variational_and_prior.sum()
+        
+        return likelihood + variational_and_prior
+
+    def elbo(self, mu, sigma, gamma):
+        return -self.nelbo(mu, sigma, gamma)
 
     def get_history(self, tolerance=1e-5, verbose=False, min_epochs=10, max_epochs=1000,
             max_patience=10, patience_factor=2):
