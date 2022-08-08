@@ -101,8 +101,6 @@ class Analyse:
 
         success = ((lower <= theta) & (theta <= upper)) | ((theta == 0) & (gamma != 1))
         cr_length = upper - lower
-        components = (cr_length >= 1e-5) + (gamma != 1)*((0 < lower) | (upper < 0))
-        components = np.maximum(components, 1)
 
         if mode == "positive":
             index = pos_index
@@ -111,18 +109,17 @@ class Analyse:
         else:
             index = all_index
 
-        return success[index].mean(), cr_length[index].mean(), components[index].mean()
+        return success[index].mean(), cr_length[index].mean() 
 
     def credible_region_summary_df(self, label="Beginning", alphas=[0.1, 0.05, 0.01]):
         modes = ["positive", "negative", "overall"]
         result = {mode: {} for mode in modes}
         for alpha in alphas:
             for mode in modes:
-                accuracy, length, components = self.credible_region_summary(label, mode, alpha)
+                accuracy, length = self.credible_region_summary(label, mode, alpha)
                 result[mode][alpha] = {}
                 result[mode][alpha]["accuracy"] = accuracy
                 result[mode][alpha]["average cr_length"] = length
-                result[mode][alpha]["average components"] = components
 
         df = pd.concat([pd.DataFrame(result[mode]) for mode in modes], keys=modes)
         df = df.swaplevel().sort_index()
