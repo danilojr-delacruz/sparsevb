@@ -198,6 +198,8 @@ class BaseVB(ABC):
         history["sigma"] = np.vstack(history["sigma"]).T
         history["gamma"] = np.vstack(history["gamma"]).T
         history["delta_h"] = np.array(history["delta_h"])
+        history["epochs"] = epochs
+        history["run_time"] = run_time
 
         return history
 
