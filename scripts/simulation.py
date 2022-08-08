@@ -144,7 +144,6 @@ for t in range(4):
         ("CR Inclusion Accuracy", analyser.credible_region_accuracy, (theta, lower, upper)),
         ("CR Average Length", analyser.credible_region_average_length, (lower, upper))
     ]:
-        summary[label]
         for target, index in [
             ("positive", pos_index), ("negative", neg_index), ("all", all_index)
         ]:
