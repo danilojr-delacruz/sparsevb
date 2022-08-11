@@ -19,15 +19,19 @@ class BaseVB(ABC):
 
         self.a0, self.b0 = 1, self.p
     
-    def initial_values(self):
+    def initial_values(self, tiers=3):
 
         X, Y = self.data
         # Ridge Regression Estimate
         mu = np.linalg.inv((X.T@X + np.eye(self.p))) @ X.T @ Y
-        # How do we initialise this?
         sigma = np.ones(self.p)
-        # How do we initialise this?
-        gamma = np.ones(self.p) / 3
+
+        # Data-Oriented Estimate of gamma
+        gamma = np.ones(self.p)
+        groups = np.array_split(np.arange(self.p), tiers)
+        mu_sort_index = np.argsort(abs(mu))
+        for i in range(tiers):
+            gamma[mu_sort_index[groups[i]]] = i /(tiers-1)
         
         return mu, sigma, gamma 
 
